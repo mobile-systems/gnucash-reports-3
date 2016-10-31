@@ -9,17 +9,19 @@
 ;; Michael T. Garrison Stuber
 ;; Modified account names display by Tomas Pospisek
 ;; <tpo_deb@sourcepole.ch> with a lot of help from "warlord"
+;; Modifications for supporting Swedish accounting standards by
+;; Jonatan Wentzel <jonatan.wentzel@gmail.com>
 ;;
-;; This program is free software; you can redistribute it and/or    
-;; modify it under the terms of the GNU General Public License as   
-;; published by the Free Software Foundation; either version 2 of   
-;; the License, or (at your option) any later version.              
-;;                                                                  
-;; This program is distributed in the hope that it will be useful,  
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of   
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    
-;; GNU General Public License for more details.                     
-;;                                                                  
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of
+;; the License, or (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program; if not, contact:
 ;;
@@ -65,7 +67,7 @@
 ;; The option-values of the sorting key multichoice option, for
 ;; which a subtotal should be enabled.
 (define subtotal-enabled '(account-name
-                           account-code 
+                           account-code
                            corresponding-acc-name
                            corresponding-acc-code))
 
@@ -86,12 +88,12 @@
      (gnc:timepair-get-year tp-b)))
 
 (define (timepair-same-quarter tp-a tp-b)
-  (and (timepair-same-year tp-a tp-b) 
+  (and (timepair-same-year tp-a tp-b)
        (= (gnc:timepair-get-quarter tp-a)
           (gnc:timepair-get-quarter tp-b))))
 
 (define (timepair-same-month tp-a tp-b)
-  (and (timepair-same-year tp-a tp-b) 
+  (and (timepair-same-year tp-a tp-b)
        (= (gnc:timepair-get-month tp-a)
           (gnc:timepair-get-month tp-b))))
 
@@ -121,8 +123,8 @@
     (timepair-same-year tp-a tp-b)))
 
 (define (set-last-row-style! table tag . rest)
-  (let ((arg-list 
-         (cons table 
+  (let ((arg-list
+         (cons table
                (cons (- (gnc:html-table-num-rows table) 1)
                      (cons tag rest)))))
     (apply gnc:html-table-set-row-style! arg-list)))
@@ -140,7 +142,7 @@
   ;;# on multi-line splits we can get an empty ('()) account
   (if (null? account)
         (_ "Split Transaction")
-        (string-append 
+        (string-append
            ;; display account code?
            (if show-account-code
                  (string-append (xaccAccountGetCode account) " ")
@@ -166,7 +168,7 @@
                                                (used-sort-account-full-name column-vector))))
                         table width subheading-style)))
 
-(define (render-corresponding-account-subheading 
+(define (render-corresponding-account-subheading
          split table width subheading-style column-vector)
   (let ((account (xaccSplitGetAccount (xaccSplitGetOtherSplit split))))
     (add-subheading-row (gnc:make-html-text
@@ -189,47 +191,47 @@
 
 (define (render-month-subheading split table width subheading-style column-vector)
   (add-subheading-row (gnc:date-get-month-year-string
-                      (gnc:timepair->date 
+                      (gnc:timepair->date
                        (gnc-transaction-get-date-posted
                         (xaccSplitGetParent split))))
                      table width subheading-style))
 
 (define (render-quarter-subheading split table width subheading-style column-vector)
-  (add-subheading-row (gnc:date-get-quarter-year-string 
-                      (gnc:timepair->date 
+  (add-subheading-row (gnc:date-get-quarter-year-string
+                      (gnc:timepair->date
                        (gnc-transaction-get-date-posted
                         (xaccSplitGetParent split))))
                      table width subheading-style))
 
 (define (render-year-subheading split table width subheading-style column-vector)
-  (add-subheading-row (gnc:date-get-year-string 
-                      (gnc:timepair->date 
+  (add-subheading-row (gnc:date-get-year-string
+                      (gnc:timepair->date
                        (gnc-transaction-get-date-posted
                         (xaccSplitGetParent split))))
                       table width subheading-style))
 
 
-(define (add-subtotal-row table width subtotal-string subtotal-collector 
+(define (add-subtotal-row table width subtotal-string subtotal-collector
                           subtotal-style export?)
   (let ((currency-totals (subtotal-collector
                           'format gnc:make-gnc-monetary #f))
         (blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
     (gnc:html-table-append-row/markup!
      table
-     subtotal-style 
+     subtotal-style
      (if export?
       (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
                      (gnc:html-make-empty-cells (- width 2)))
-               (list (gnc:make-html-table-cell/markup 
+               (list (gnc:make-html-table-cell/markup
                       "total-number-cell"
                       (car currency-totals))))
      (list (gnc:make-html-table-cell/size/markup 1 (- width 1) "total-label-cell"
                                           subtotal-string)
-           (gnc:make-html-table-cell/markup 
+           (gnc:make-html-table-cell/markup
             "total-number-cell"
              (car currency-totals)))))
     (for-each (lambda (currency)
-                (gnc:html-table-append-row/markup! 
+                (gnc:html-table-append-row/markup!
                  table
                  subtotal-style
                  (append!
@@ -242,9 +244,9 @@
 
 (define (total-string str) (string-append (_ "Total For ") str))
 
-(define (render-account-subtotal 
+(define (render-account-subtotal
          table width split total-collector subtotal-style column-vector export?)
-    (add-subtotal-row table width 
+    (add-subtotal-row table width
                       (total-string (account-namestring (xaccSplitGetAccount split)
                                                         (used-sort-account-code      column-vector)
                                                         #t
@@ -273,7 +275,7 @@
          table width split total-collector subtotal-style column-vector export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
-    (add-subtotal-row table width 
+    (add-subtotal-row table width
                       (total-string (gnc:date-get-month-year-string tm))
                       total-collector subtotal-style export?)))
 
@@ -282,7 +284,7 @@
          table width split total-collector subtotal-style column-vector export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
-    (add-subtotal-row table width 
+    (add-subtotal-row table width
                       (total-string (gnc:date-get-quarter-year-string tm))
                      total-collector subtotal-style export?)))
 
@@ -290,7 +292,7 @@
          table width split total-collector subtotal-style column-vector export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
-    (add-subtotal-row table width 
+    (add-subtotal-row table width
                       (total-string (strftime "%Y" tm))
                       total-collector subtotal-style export?)))
 
@@ -320,17 +322,17 @@
 (define (used-account-name columns-used)
   (vector-ref columns-used 4))
 (define (used-other-account-name columns-used)
-  (vector-ref columns-used 5))	
+  (vector-ref columns-used 5))
 (define (used-shares columns-used)
-  (vector-ref columns-used 6))	
+  (vector-ref columns-used 6))
 (define (used-price columns-used)
-  (vector-ref columns-used 7))	
+  (vector-ref columns-used 7))
 (define (used-amount-single columns-used)
-  (vector-ref columns-used 8))	
+  (vector-ref columns-used 8))
 (define (used-amount-double-positive columns-used)
-  (vector-ref columns-used 9))	
+  (vector-ref columns-used 9))
 (define (used-amount-double-negative columns-used)
-  (vector-ref columns-used 10))	
+  (vector-ref columns-used 10))
 (define (used-running-balance columns-used)
   (vector-ref columns-used 11))
 (define (used-account-full-name columns-used)
@@ -352,9 +354,9 @@
 
 (define columns-used-size 20)
 
-(define (num-columns-required columns-used)  
-  (do ((i 0 (+ i 1)) 
-       (col-req 0 col-req)) 
+(define (num-columns-required columns-used)
+  (do ((i 0 (+ i 1))
+       (col-req 0 col-req))
       ((>= i columns-used-size) col-req)
     ; If column toggle is true, increase column count. But attention:
     ; some toggles only change the meaning of another toggle. Don't count these modifier toggles
@@ -372,9 +374,9 @@
             (and (= i 15) (vector-ref columns-used 15) (vector-ref columns-used 5))) ; Other Account Code and Name
       (set! col-req (- col-req 1)))))
 
-(define (build-column-used options)   
+(define (build-column-used options)
   (define (opt-val section name)
-    (gnc:option-value 
+    (gnc:option-value
      (gnc:lookup-option options section name)))
   (let ((column-list (make-vector columns-used-size #f)))
     (if (opt-val (N_ "Display") (N_ "Date"))
@@ -433,7 +435,7 @@
                                       (if (gnc:lookup-option options
                                                     gnc:pagename-display
                                                     (N_ "Trans Number"))
-                                          (gnc:option-value 
+                                          (gnc:option-value
                                             (gnc:lookup-option options
                                                     gnc:pagename-display
                                                     (N_ "Trans Number")))
@@ -469,7 +471,7 @@
                        row-style account-types-to-reverse transaction-row?)
 
   (define (opt-val section name)
-    (gnc:option-value 
+    (gnc:option-value
      (gnc:lookup-option options section name)))
 
   (let* ((row-contents '())
@@ -488,9 +490,9 @@
 					 (xaccSplitGetAmount split)))
 	 (trans-date (gnc-transaction-get-date-posted parent))
 	 (split-value (gnc:exchange-by-pricedb-nearest
-		       (gnc:make-gnc-monetary 
+		       (gnc:make-gnc-monetary
 			currency
-			(if (member account-type account-types-to-reverse) 
+			(if (member account-type account-types-to-reverse)
 			    (gnc-numeric-neg damount)
 			    damount))
 		       report-currency
@@ -498,7 +500,7 @@
 		       ;; on the same day.  Otherwise it uses midnight which will
 		       ;; likely match a price on the previous day
 		       (timespecCanonicalDayTime trans-date))))
-    
+
     (if (used-date column-vector)
         (addto! row-contents
                 (if transaction-row?
@@ -541,31 +543,31 @@
                     (gnc:make-html-table-cell/markup "text-cell"
                         (xaccTransGetDescription parent))
                     " ")))
-    
+
     (if (used-memo column-vector)
         (let ((memo (xaccSplitGetMemo split)))
           (if (and (equal? memo "") (used-notes column-vector))
               (addto! row-contents (xaccTransGetNotes parent))
               (addto! row-contents memo))))
-    
+
     (if (or (used-account-name column-vector) (used-account-code column-vector))
        (addto! row-contents (account-namestring account
                                                 (used-account-code      column-vector)
                                                 (used-account-name      column-vector)
                                                 (used-account-full-name column-vector))))
-    
+
     (if (or (used-other-account-name column-vector) (used-other-account-code column-vector))
        (addto! row-contents (account-namestring (xaccSplitGetAccount
                                                    (xaccSplitGetOtherSplit split))
                                                 (used-other-account-code      column-vector)
                                                 (used-other-account-name      column-vector)
                                                 (used-other-account-full-name column-vector))))
-    
+
     (if (used-shares column-vector)
         (addto! row-contents (xaccSplitGetAmount split)))
     (if (used-price column-vector)
-        (addto! 
-         row-contents 
+        (addto!
+         row-contents
          (gnc:make-gnc-monetary (xaccTransGetCurrency parent)
                                 (xaccSplitGetSharePrice split))))
     (if (used-amount-single column-vector)
@@ -604,14 +606,14 @@
   (define gnc:*transaction-report-options* (gnc:new-options))
   (define (gnc:register-trep-option new-option)
     (gnc:register-option gnc:*transaction-report-options* new-option))
-  
+
   ;; General options
-  
+
   (gnc:options-add-date-interval!
    gnc:*transaction-report-options*
    gnc:pagename-general (N_ "Start Date") (N_ "End Date") "a")
-  
-  
+
+
   (gnc:register-trep-option
    (gnc:make-multichoice-option
     gnc:pagename-general (N_ "Style")
@@ -642,10 +644,10 @@
   (gnc:register-trep-option
    (gnc:make-simple-boolean-option
     gnc:pagename-general optname-table-export
-    "g" (N_ "Formats the table suitable for cut & paste exporting with extra cells.") #f))  
-  
+    "g" (N_ "Formats the table suitable for cut & paste exporting with extra cells.") #f))
+
   ;; Accounts options
-  
+
   ;; account to do report on
   (gnc:register-trep-option
    (gnc:make-account-list-option
@@ -707,16 +709,16 @@
 	   'void-only
 	   (N_ "Void only")
 	   (N_ "Show only voided transactions."))
-	  (vector 
+	  (vector
 	   'both
 	   (N_ "Both")
 	   (N_ "Show both (and include void transactions in totals).")))))
 
   ;; Sorting options
-      
+
   (let ((options gnc:*transaction-report-options*)
 
-        (key-choice-list 
+        (key-choice-list
          (if (qof-book-use-split-action-for-num-field (gnc-get-current-book))
              (list (vector 'none
                            (N_ "None")
@@ -746,22 +748,22 @@
                            (N_ "Register Order")
                            (N_ "Sort as with the register."))
 
-                   (vector 'corresponding-acc-name 
+                   (vector 'corresponding-acc-name
                            (N_ "Other Account Name")
                            (N_ "Sort by account transferred from/to's name."))
 
                    (vector 'corresponding-acc-code
                            (N_ "Other Account Code")
                            (N_ "Sort by account transferred from/to's code."))
-               
+
                    (vector 'amount
                            (N_ "Amount")
                            (N_ "Sort by amount."))
-               
+
                    (vector 'description
                            (N_ "Description")
                            (N_ "Sort by description."))
-               
+
                    (vector 'number
                            (N_ "Number/Action")
                            (N_ "Sort by check number/action."))
@@ -769,7 +771,7 @@
                    (vector 't-number
                            (N_ "Transaction Number")
                            (N_ "Sort by transaction number."))
-               
+
                    (vector 'memo
                            (N_ "Memo")
                            (N_ "Sort by memo.")))
@@ -801,22 +803,22 @@
                            (N_ "Register Order")
                            (N_ "Sort as with the register."))
 
-                   (vector 'corresponding-acc-name 
+                   (vector 'corresponding-acc-name
                            (N_ "Other Account Name")
                            (N_ "Sort by account transferred from/to's name."))
 
                    (vector 'corresponding-acc-code
                            (N_ "Other Account Code")
                            (N_ "Sort by account transferred from/to's code."))
-               
+
                    (vector 'amount
                            (N_ "Amount")
                            (N_ "Sort by amount."))
-               
+
                    (vector 'description
                            (N_ "Description")
                            (N_ "Sort by description."))
-               
+
                    (vector 'number
                            (N_ "Number")
                            (N_ "Sort by check/transaction number."))
@@ -825,7 +827,7 @@
                            (N_ "Memo")
                            (N_ "Sort by memo.")))))
 
-        (ascending-choice-list 
+        (ascending-choice-list
          (list
           (vector 'ascend
                   (N_ "Ascending")
@@ -841,7 +843,7 @@
           (vector 'monthly (N_ "Monthly") (N_ "Monthly."))
           (vector 'quarterly (N_ "Quarterly") (N_ "Quarterly."))
           (vector 'yearly (N_ "Yearly") (N_ "Yearly.")))))
-    
+
     ;; primary sorting criterion
     (gnc:register-trep-option
      (gnc:make-multichoice-callback-option
@@ -856,42 +858,42 @@
         (gnc-option-db-set-option-selectable-by-name
          options pagename-sorting optname-prime-date-subtotal
          (if (member x date-sorting-types) #t #f)))))
-    
+
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
       pagename-sorting (N_ "Show Full Account Name")
-      "a1" 
+      "a1"
       (N_ "Show the full account name for subtotals and subtitles?")
       #f))
-    
+
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
       pagename-sorting (N_ "Show Account Code")
-      "a2" 
+      "a2"
       (N_ "Show the account code for subtotals and subtitles?")
       #f))
-    
+
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
       pagename-sorting optname-prime-subtotal
-      "c" 
+      "c"
       (N_ "Subtotal according to the primary key?")
       #t))
-    
+
     (gnc:register-trep-option
      (gnc:make-multichoice-option
       pagename-sorting optname-prime-date-subtotal
       "d" (N_ "Do a date subtotal.")
       'monthly
       subtotal-choice-list))
-    
+
     (gnc:register-trep-option
      (gnc:make-multichoice-option
       pagename-sorting (N_ "Primary Sort Order")
       "e" (N_ "Order of primary sorting.")
       'ascend
       ascending-choice-list))
-    
+
     ;; Secondary sorting criterion
     (gnc:register-trep-option
      (gnc:make-multichoice-callback-option
@@ -907,30 +909,30 @@
         (gnc-option-db-set-option-selectable-by-name
          options pagename-sorting optname-sec-date-subtotal
          (if (member x date-sorting-types) #t #f)))))
-    
+
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
       pagename-sorting optname-sec-subtotal
-      "g" 
+      "g"
       (N_ "Subtotal according to the secondary key?")
       #t))
-    
+
     (gnc:register-trep-option
      (gnc:make-multichoice-option
       pagename-sorting optname-sec-date-subtotal
       "h" (N_ "Do a date subtotal.")
       'monthly
       subtotal-choice-list))
-    
+
     (gnc:register-trep-option
      (gnc:make-multichoice-option
       pagename-sorting (N_ "Secondary Sort Order")
       "i" (N_ "Order of Secondary sorting.")
       'ascend
       ascending-choice-list)))
-  
+
   ;; Display options
-  
+
   (for-each
    (lambda (l)
      (gnc:register-trep-option
@@ -981,19 +983,19 @@
   (gnc:register-trep-option
    (gnc:make-multichoice-option
     gnc:pagename-display (N_ "Amount")
-    "m" (N_ "Display the amount?")  
+    "m" (N_ "Display the amount?")
     'single
     (list
      (vector 'none (N_ "None") (N_ "No amount display."))
      (vector 'single (N_ "Single") (N_ "Single Column Display."))
      (vector 'double (N_ "Double") (N_ "Two Column Display.")))))
-  
+
   (gnc:register-trep-option
    (gnc:make-multichoice-option
     gnc:pagename-display (N_ "Sign Reverses")
     "p" (N_ "Reverse amount display for certain account types.")
     'credit-accounts
-    (list 
+    (list
      (vector 'none (N_ "None") (N_ "Don't change any displayed amounts."))
      (vector 'income-expense (N_ "Income and Expense")
              (N_ "Reverse amount display for Income and Expense Accounts."))
@@ -1014,7 +1016,7 @@ Credit Card, and Income accounts.")))))
     (sprintf #f (_ "From %s To %s") begin-string end-string)))
 
 (define (get-primary-subtotal-style options)
-  (let ((bgcolor (gnc:lookup-option options 
+  (let ((bgcolor (gnc:lookup-option options
                                     (N_ "Colors")
                                     (N_ "Primary Subtotals/headings"))))
     (list 'attribute (list "bgcolor" (gnc:color-option->html bgcolor)))))
@@ -1053,17 +1055,17 @@ Credit Card, and Income accounts.")))))
                           secondary-subheading-renderer
                           primary-subtotal-renderer
                           secondary-subtotal-renderer)
-  
+
  (let ((work-to-do (length splits))
        (work-done 0)
        (used-columns (build-column-used options)))
   (define (get-account-types-to-reverse options)
-    (cdr (assq (gnc:option-value 
+    (cdr (assq (gnc:option-value
                 (gnc:lookup-option options
                                    (N_ "Display")
                                    (N_ "Sign Reverses")))
                account-types-to-reverse-assoc-list)))
-  
+
 
   (define (transaction-report-multi-rows-p options)
     (eq? (gnc:option-value
@@ -1091,8 +1093,8 @@ Credit Card, and Income accounts.")))))
     (other-rows-driver split (xaccSplitGetParent split)
                        table used-columns 0))
 
-  (define (do-rows-with-subtotals splits 
-                                  table 
+  (define (do-rows-with-subtotals splits
+                                  table
                                   used-columns
                                   width
                                   multi-rows?
@@ -1100,13 +1102,13 @@ Credit Card, and Income accounts.")))))
                                   export?
                                   account-types-to-reverse
                                   primary-subtotal-pred
-                                  secondary-subtotal-pred 
+                                  secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
                                   primary-subtotal-renderer
                                   secondary-subtotal-renderer
-                                  primary-subtotal-collector 
-                                  secondary-subtotal-collector 
+                                  primary-subtotal-collector
+                                  secondary-subtotal-collector
                                   total-collector)
 
     (gnc:report-percent-done (* 100 (/ work-done work-to-do)))
@@ -1121,17 +1123,17 @@ Credit Card, and Income accounts.")))))
              1 width (gnc:make-html-text (gnc:html-markup-hr)))))
 	  (if (gnc:option-value (gnc:lookup-option options "Display" "Totals"))
 	      (render-grand-total table width total-collector export?)))
-	
+
         (let* ((current (car splits))
                (current-row-style (if multi-rows? def:normal-row-style
-                                      (if odd-row? def:normal-row-style 
+                                      (if odd-row? def:normal-row-style
                                           def:alternate-row-style)))
                (rest (cdr splits))
                (next (if (null? rest) #f
                          (car rest)))
-               (split-value (add-split-row 
-                             table 
-                             current 
+               (split-value (add-split-row
+                             table
+                             current
                              used-columns
 			     options
                              current-row-style
@@ -1142,9 +1144,9 @@ Credit Card, and Income accounts.")))))
                current table used-columns def:alternate-row-style
                account-types-to-reverse))
 
-          (primary-subtotal-collector 'add 
+          (primary-subtotal-collector 'add
                                       (gnc:gnc-monetary-commodity
-                                       split-value) 
+                                       split-value)
                                       (gnc:gnc-monetary-amount
                                        split-value))
           (secondary-subtotal-collector 'add
@@ -1160,7 +1162,7 @@ Credit Card, and Income accounts.")))))
                    (or (not next)
                        (and next
                             (not (primary-subtotal-pred current next)))))
-              (begin 
+              (begin
                 (if secondary-subtotal-pred
 
                     (begin
@@ -1178,14 +1180,14 @@ Credit Card, and Income accounts.")))))
                 (primary-subtotal-collector 'reset #f #f)
 
                 (if next
-                    (begin 
+                    (begin
                       (primary-subheading-renderer
                        next table width def:primary-subtotal-style used-columns)
 
                       (if secondary-subtotal-pred
                           (secondary-subheading-renderer
-                           next 
-                           table 
+                           next
+                           table
                            width def:secondary-subtotal-style used-columns)))))
 
               (if (and secondary-subtotal-pred
@@ -1203,22 +1205,22 @@ Credit Card, and Income accounts.")))))
                               next table width
                               def:secondary-subtotal-style used-columns)))))
 
-          (do-rows-with-subtotals rest 
-                                  table 
+          (do-rows-with-subtotals rest
+                                  table
                                   used-columns
-                                  width 
+                                  width
                                   multi-rows?
                                   (not odd-row?)
                                   export?
                                   account-types-to-reverse
-                                  primary-subtotal-pred 
+                                  primary-subtotal-pred
                                   secondary-subtotal-pred
-                                  primary-subheading-renderer 
+                                  primary-subheading-renderer
                                   secondary-subheading-renderer
                                   primary-subtotal-renderer
                                   secondary-subtotal-renderer
-                                  primary-subtotal-collector 
-                                  secondary-subtotal-collector 
+                                  primary-subtotal-collector
+                                  secondary-subtotal-collector
                                   total-collector))))
 
   (let* ((table (gnc:make-html-table))
@@ -1234,7 +1236,7 @@ Credit Card, and Income accounts.")))))
     ;;     (gnc:warn "Splits:" splits)
     (if (not (null? splits))
         (begin
-          (if primary-subheading-renderer 
+          (if primary-subheading-renderer
               (primary-subheading-renderer
                (car splits) table width def:primary-subtotal-style used-columns))
           (if secondary-subheading-renderer
@@ -1254,7 +1256,7 @@ Credit Card, and Income accounts.")))))
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector))))
-    
+
     table)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;
@@ -1274,12 +1276,12 @@ Credit Card, and Income accounts.")))))
     ;; subtotal-function subtotal-renderer))
 ;;  (let* ((used-columns (build-column-used options))) ;; tpo: gives unbound variable options?
     (let* ((used-columns (build-column-used (gnc:report-options report-obj))))
-      (list (cons 'account-name  (vector 
+      (list (cons 'account-name  (vector
                                   (list SPLIT-ACCT-FULLNAME)
-                                  split-account-full-name-same-p 
+                                  split-account-full-name-same-p
                                   render-account-subheading
                                   render-account-subtotal))
-            (cons 'account-code  (vector 
+            (cons 'account-code  (vector
                                   (list SPLIT-ACCOUNT ACCOUNT-CODE-)
                                   split-account-code-same-p
                                   render-account-subheading
@@ -1299,13 +1301,13 @@ Credit Card, and Income accounts.")))))
             (cons 'corresponding-acc-name
                                  (vector
                                   (list SPLIT-CORR-ACCT-NAME)
-                                  split-same-corr-account-full-name-p 
+                                  split-same-corr-account-full-name-p
                                   render-corresponding-account-subheading
                                   render-corresponding-account-subtotal))
             (cons 'corresponding-acc-code
                                  (vector
                                   (list SPLIT-CORR-ACCT-CODE)
-                                  split-same-corr-account-code-p 
+                                  split-same-corr-account-code-p
                                   render-corresponding-account-subheading
                                   render-corresponding-account-subtotal))
             (cons 'amount        (vector (list SPLIT-VALUE) #f #f #f))
@@ -1325,14 +1327,14 @@ Credit Card, and Income accounts.")))))
      (cons 'none (vector #f #f #f))
      (cons 'weekly (vector split-same-week-p render-week-subheading
 			   render-week-subtotal))
-     (cons 'monthly (vector split-same-month-p render-month-subheading 
+     (cons 'monthly (vector split-same-month-p render-month-subheading
                             render-month-subtotal))
-     (cons 'quarterly (vector split-same-quarter-p render-quarter-subheading 
+     (cons 'quarterly (vector split-same-quarter-p render-quarter-subheading
                             render-quarter-subtotal))
      (cons 'yearly (vector split-same-year-p render-year-subheading
                            render-year-subtotal))))
 
-  (define (get-subtotalstuff-helper 
+  (define (get-subtotalstuff-helper
            name-sortkey name-subtotal name-date-subtotal
            comp-index date-index)
     ;; The value of the sorting-key multichoice option.
@@ -1343,32 +1345,32 @@ Credit Card, and Income accounts.")))))
           ;; corresponding funcs in the assoc-list.
           (vector-ref
            (cdr (assq (opt-val pagename-sorting name-date-subtotal)
-                      date-comp-funcs-assoc-list)) 
+                      date-comp-funcs-assoc-list))
            date-index)
           ;; For everything else: 1. check whether sortkey has
           ;; subtotalling enabled at all, 2. check whether the
           ;; enable-subtotal boolean option is #t, 3. look up the
           ;; appropriate funcs in the assoc-list.
-          (and (member sortkey subtotal-enabled) 
+          (and (member sortkey subtotal-enabled)
                (and (opt-val pagename-sorting name-subtotal)
-                    (vector-ref 
-                     (cdr (assq sortkey comp-funcs-assoc-list)) 
+                    (vector-ref
+                     (cdr (assq sortkey comp-funcs-assoc-list))
                      comp-index))))))
-  
+
   (define (get-query-sortkey sort-option-value)
-    (vector-ref 
-     (cdr (assq sort-option-value comp-funcs-assoc-list)) 
+    (vector-ref
+     (cdr (assq sort-option-value comp-funcs-assoc-list))
      0))
 
-  (define (get-subtotal-pred 
+  (define (get-subtotal-pred
            name-sortkey name-subtotal name-date-subtotal)
-    (get-subtotalstuff-helper 
+    (get-subtotalstuff-helper
      name-sortkey name-subtotal name-date-subtotal
      1 0))
 
   (define (get-subheading-renderer
            name-sortkey name-subtotal name-date-subtotal)
-    (get-subtotalstuff-helper 
+    (get-subtotalstuff-helper
      name-sortkey name-subtotal name-date-subtotal
      2 1))
 
@@ -1430,7 +1432,7 @@ Credit Card, and Income accounts.")))))
         (enddate (gnc:timepair-end-day-time
                   (gnc:date-option-absolute-time
                    (opt-val gnc:pagename-general "End Date"))))
-        (report-title (opt-val 
+        (report-title (opt-val
                        gnc:pagename-general
                        gnc:optname-reportname))
         (primary-key (opt-val pagename-sorting optname-prime-sortkey))
@@ -1464,7 +1466,7 @@ Credit Card, and Income accounts.")))))
                                          #t)
 
 	  (case void-status
-	   ((non-void-only) 
+	   ((non-void-only)
 	    (gnc:query-set-match-non-voids-only! query (gnc-get-current-book)))
 	   ((void-only)
 	    (gnc:query-set-match-voids-only! query (gnc-get-current-book)))
@@ -1481,7 +1483,7 @@ Credit Card, and Income accounts.")))))
 	  (if (eq? filter-mode 'include)
 	      (begin
 		;;(gnc:warn "Including Filter Accounts")
-		(set! splits (filter (lambda (split) 
+		(set! splits (filter (lambda (split)
 				       (is-filter-member split c_account_2))
 				     splits))
 		)
@@ -1490,27 +1492,27 @@ Credit Card, and Income accounts.")))))
 	  (if (eq? filter-mode 'exclude)
 	      (begin
 		;;(gnc:warn "Excluding Filter Accounts")
-		(set! splits (filter (lambda (split) 
+		(set! splits (filter (lambda (split)
 				       (not (is-filter-member split c_account_2)))
 				     splits))
 		)
 	      )
-	
+
           (if (not (null? splits))
-              (let ((table 
-                     (make-split-table 
-                      splits 
+              (let ((table
+                     (make-split-table
+                      splits
                       options
-                      (get-subtotal-pred optname-prime-sortkey 
+                      (get-subtotal-pred optname-prime-sortkey
                                          optname-prime-subtotal
                                          optname-prime-date-subtotal)
-                      (get-subtotal-pred optname-sec-sortkey 
+                      (get-subtotal-pred optname-sec-sortkey
                                          optname-sec-subtotal
                                          optname-sec-date-subtotal)
-                      (get-subheading-renderer optname-prime-sortkey 
+                      (get-subheading-renderer optname-prime-sortkey
                                                optname-prime-subtotal
                                                optname-prime-date-subtotal)
-                      (get-subheading-renderer optname-sec-sortkey 
+                      (get-subheading-renderer optname-sec-sortkey
                                                optname-sec-subtotal
                                                optname-sec-date-subtotal)
                       (get-subtotal-renderer   optname-prime-sortkey
@@ -1522,20 +1524,20 @@ Credit Card, and Income accounts.")))))
 
                 (gnc:html-document-set-title! document
                                               report-title)
-                (gnc:html-document-add-object! 
+                (gnc:html-document-add-object!
                  document
                  (gnc:make-html-text
-                  (gnc:html-markup-h3 
+                  (gnc:html-markup-h3
                    (display-date-interval begindate enddate))))
                 (gnc:html-document-add-object!
-                 document 
+                 document
                  table)
                 (qof-query-destroy query))
               ;; error condition: no splits found
               (let ((p (gnc:make-html-text)))
-                (gnc:html-text-append! 
-                 p 
-                 (gnc:html-markup-h2 
+                (gnc:html-text-append!
+                 p
+                 (gnc:html-markup-h2
                   (_ "No matching transactions found"))
                  (gnc:html-markup-p
                   (_ "No transactions were found that \
@@ -1544,10 +1546,10 @@ in the Options panel.")))
                 (gnc:html-document-add-object! document p))))
 
         ;; error condition: no accounts specified
-        
+
         (gnc:html-document-add-object!
-         document 
-	 (gnc:html-make-no-account-warning 
+         document
+	 (gnc:html-make-no-account-warning
 	  report-title (gnc:report-id report-obj))))
 
     (gnc:report-finished)
@@ -1555,12 +1557,12 @@ in the Options panel.")))
 
 ;; Define the report.
 (gnc:define-report
- 
+
  'version 1
- 
+
  'name reportname
  'report-guid "2fe3b9833af044abb929a88d5a59620f"
- 
+
  'options-generator trep-options-generator
- 
+
  'renderer trep-renderer)
