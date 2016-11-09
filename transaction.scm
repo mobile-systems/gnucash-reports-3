@@ -1306,7 +1306,7 @@ Credit Card, and Income accounts.")))))
     ;; subtotal functions. Each entry: (cons
     ;; 'sorting-key-option-value (vector 'query-sorting-key
     ;; subtotal-function subtotal-renderer))
-;;  (let* ((used-columns (build-column-used options))) ;; tpo: gives unbound variable options?
+;;  (let* ((used-columns (build-column-used options))) ;; tpo: gives unbound variable options? )
     (let* ((used-columns (build-column-used (gnc:report-options report-obj))))
       (list (cons 'account-name  (vector
                                   (list SPLIT-ACCT-FULLNAME)
