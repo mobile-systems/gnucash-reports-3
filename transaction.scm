@@ -50,7 +50,8 @@
 (define reportname (N_ "Modified Transaction Report"))
 (define pagename-sorting (N_ "Sorting"))
 (define optname-prime-sortkey (N_ "Primary Key"))
-(define optname-prime-subtotal (N_ "Primary Subtotal"))
+(define optname-prime-subtotal (N_ "Primary Subtotal for Running Balance"))
+(define optname-prime-subtotal-debit-credit (N_ "Primary Subtotal for Debit/Credit"))
 (define optname-prime-date-subtotal (N_ "Primary Subtotal for Date Key"))
 (define optname-sec-sortkey (N_ "Secondary Key"))
 (define optname-sec-subtotal (N_ "Secondary Subtotal"))
@@ -908,7 +909,14 @@
      (gnc:make-simple-boolean-option
       pagename-sorting optname-prime-subtotal
       "c"
-      (N_ "Subtotal according to the primary key?")
+      (N_ "Subtotal for running balance according to the primary key?")
+      #f))
+
+    (gnc:register-trep-option
+     (gnc:make-simple-boolean-option
+      pagename-sorting optname-prime-subtotal-debit-credit
+      "c2"
+      (N_ "Subtotal for debit/credit according to the primary key?")
       #t))
 
     (gnc:register-trep-option
@@ -990,8 +998,10 @@
     (list (N_ "Price")                        "l"  (N_ "Display the shares price?") #f)
     ;; note the "Amount" multichoice option in between here
     (list (N_ "Running Balance")              "n"  (N_ "Display a running balance?") #f)
-    (list (N_ "Totals")                       "o"  (N_ "Display the totals?") #t)
-    (list (N_ "Show Currency")                     "q"  (N_ "Display the currency?") #f)))
+    (list (N_ "Running balance grand total")  "o"  (N_ "Display the grand total for running balance?") #f)
+    (list (N_ "Show Currency")                "q"  (N_ "Display the currency?") #f)
+    (list (N_ "Debit/credit grand total")     "r"  (N_ "Display the grand total for debit/credit") #t)
+    ))
 
   (if (qof-book-use-split-action-for-num-field (gnc-get-current-book))
       (gnc:register-trep-option
@@ -1013,14 +1023,41 @@
 		 x))))
 
   (gnc:register-trep-option
-   (gnc:make-multichoice-option
+   (gnc:make-multichoice-callback-option
     gnc:pagename-display (N_ "Amount")
     "m" (N_ "Display the amount?")
-    'single
+    'double
     (list
      (vector 'none (N_ "None") (N_ "No amount display."))
      (vector 'single (N_ "Single") (N_ "Single Column Display."))
-     (vector 'double (N_ "Double") (N_ "Two Column Display.")))))
+     (vector 'double (N_ "Double") (N_ "Two Column Display.")))
+    #f
+    (lambda (x)
+      (if (equal? x 'double)
+        (begin
+          (gnc-option-db-set-option-selectable-by-name
+  		      gnc:*transaction-report-options*
+  		      gnc:pagename-display
+  		      (N_ "Debit/credit grand total")
+  		      #t)
+          (gnc-option-db-set-option-selectable-by-name
+  		      gnc:*transaction-report-options*
+  		      pagename-sorting
+  		      optname-prime-subtotal-debit-credit
+  		      #t))
+        (begin
+          (gnc-option-db-set-option-selectable-by-name
+            gnc:*transaction-report-options*
+            gnc:pagename-display
+            (N_ "Debit/credit grand total")
+            #f)
+          (gnc-option-db-set-option-selectable-by-name
+            gnc:*transaction-report-options*
+            pagename-sorting
+            optname-prime-subtotal-debit-credit
+            #f))
+          ))
+    ))
 
   (gnc:register-trep-option
    (gnc:make-multichoice-option
@@ -1153,7 +1190,7 @@ Credit Card, and Income accounts.")))))
            (list
             (gnc:make-html-table-cell/size
              1 width (gnc:make-html-text (gnc:html-markup-hr)))))
-	  (if (gnc:option-value (gnc:lookup-option options "Display" "Totals"))
+	  (if (gnc:option-value (gnc:lookup-option options "Display" "Running balance grand total"))
 	      (render-grand-total table width total-collector options export?)))
 
         (let* ((current (car splits))
