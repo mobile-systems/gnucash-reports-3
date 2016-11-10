@@ -212,35 +212,73 @@
                       table width subheading-style))
 
 
-(define (add-subtotal-row table width subtotal-string subtotal-collector
+(define (add-subtotal-row table width subtotal-string
+                          debit-subtotal-collector
+                          credit-subtotal-collector
+                          running-balance-subtotal-collector
                           subtotal-style options export?)
-  (let ((currency-totals (subtotal-collector
-                          'format gnc:make-gnc-monetary #f))
+  (let ((debit-currency-totals (debit-subtotal-collector 'format gnc:make-gnc-monetary #f))
+        (credit-currency-totals (credit-subtotal-collector 'format gnc:make-gnc-monetary #f))
+        (running-balance-currency-totals (running-balance-subtotal-collector 'format gnc:make-gnc-monetary #f))
         (blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
     (gnc:html-table-append-row/markup!
      table
      subtotal-style
      (if export?
       (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
-                     (gnc:html-make-empty-cells (- width 2)))
-               (list (gnc:make-html-table-cell/markup
-                      "total-number-cell"
-                      (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                        (car currency-totals)
-                        (gnc:gnc-monetary-amount (car currency-totals))
-                      )
-                     )))
-          (list (gnc:make-html-table-cell/size/markup 1 (- width 1) "total-label-cell"
-                                          subtotal-string)
+                     (gnc:html-make-empty-cells (- width 4)))
+               (list
+                     (gnc:make-html-table-cell/markup
+                              "total-number-cell"
+                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                (car debit-currency-totals)
+                                (gnc:gnc-monetary-amount (car debit-currency-totals))
+                              )
+                     )
+                     (gnc:make-html-table-cell/markup
+                              "total-number-cell"
+                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                (car credit-currency-totals)
+                                (gnc:gnc-monetary-amount (car credit-currency-totals))
+                              )
+                    )
+                    (gnc:make-html-table-cell/markup
+                             "total-number-cell"
+                             (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                               (car running-balance-currency-totals)
+                               (gnc:gnc-monetary-amount (car running-balance-currency-totals))
+                             )
+                    )
+                )
+        )
+        (list (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
+                                        subtotal-string)
+
            (gnc:make-html-table-cell/markup
-            "total-number-cell"
-            (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-              (car currency-totals)
-              (gnc:gnc-monetary-amount (car currency-totals))
+              "total-number-cell"
+              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                (car debit-currency-totals)
+                (gnc:gnc-monetary-amount (car debit-currency-totals))
               )
-           ))
+           )
+           (gnc:make-html-table-cell/markup
+              "total-number-cell"
+              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                (car credit-currency-totals)
+                (gnc:gnc-monetary-amount (car credit-currency-totals))
+              )
+           )
+           (gnc:make-html-table-cell/markup
+              "total-number-cell"
+              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                (car running-balance-currency-totals)
+                (gnc:gnc-monetary-amount (car running-balance-currency-totals))
+              )
+           )
+        )
      )
     )
+    ;; The support for debit and credit might not work correctly for mixed currencies
     (for-each (lambda (currency)
                 (gnc:html-table-append-row/markup!
                  table
@@ -251,68 +289,125 @@
                    (list blanks))
                          (list (gnc:make-html-table-cell/markup
                                 "total-number-cell" currency)))))
-              (cdr currency-totals))))
+              (cdr running-balance-currency-totals))))
 
 (define (total-string str) (string-append (_ "Total For ") str))
 
 (define (render-account-subtotal
-         table width split total-collector subtotal-style column-vector options export?)
+         table width split
+         total-debit-collector
+         total-credit-collector
+         total-running-balance-collector
+         subtotal-style column-vector options export?)
     (add-subtotal-row table width
                       (total-string (account-namestring (xaccSplitGetAccount split)
                                                         (used-sort-account-code      column-vector)
                                                         #t
                                                         (used-sort-account-full-name column-vector)))
-                      total-collector subtotal-style options export?))
+                      total-debit-collector
+                      total-credit-collector
+                      total-running-balance-collector
+                      subtotal-style
+                      options
+                      export?))
 
 (define (render-corresponding-account-subtotal
-         table width split total-collector subtotal-style column-vector options export?)
+         table width split
+         total-debit-collector
+         total-credit-collector
+         total-running-balance-collector
+         subtotal-style column-vector options export?)
     (add-subtotal-row table width
                       (total-string (account-namestring (xaccSplitGetAccount
                                                           (xaccSplitGetOtherSplit split))
                                                         (used-sort-account-code      column-vector)
                                                         #t
                                                         (used-sort-account-full-name column-vector)))
-                    total-collector subtotal-style options export?))
+
+                      total-debit-collector
+                      total-credit-collector
+                      total-running-balance-collector
+                      subtotal-style options export?))
 
 (define (render-week-subtotal
-	 table width split total-collector subtotal-style column-vector options export?)
+	 table width split
+   total-debit-collector
+   total-credit-collector
+   total-running-balance-collector
+   subtotal-style column-vector options export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
 				 (xaccSplitGetParent split)))))
     (add-subtotal-row table width
 		      (total-string (gnc:date-get-week-year-string tm))
-		      total-collector subtotal-style options export?)))
+          total-debit-collector
+          total-credit-collector
+          total-running-balance-collector
+          subtotal-style options export?)))
 
 (define (render-month-subtotal
-         table width split total-collector subtotal-style column-vector options export?)
+         table width split
+         total-debit-collector
+         total-credit-collector
+         total-running-balance-collector
+         subtotal-style column-vector options export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
     (add-subtotal-row table width
                       (total-string (gnc:date-get-month-year-string tm))
-                      total-collector subtotal-style options export?)))
+                      total-debit-collector
+                      total-credit-collector
+                      total-running-balance-collector
+                      subtotal-style options export?)))
 
 
 (define (render-quarter-subtotal
-         table width split total-collector subtotal-style column-vector options export?)
+         table width split
+         total-debit-collector
+         total-credit-collector
+         total-running-balance-collector
+         subtotal-style column-vector options export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
     (add-subtotal-row table width
                       (total-string (gnc:date-get-quarter-year-string tm))
-                     total-collector subtotal-style options export?)))
+                      total-debit-collector
+                      total-credit-collector
+                      total-running-balance-collector
+                      subtotal-style options export?)))
 
 (define (render-year-subtotal
-         table width split total-collector subtotal-style column-vector options export?)
+         table width split
+         total-debit-collector
+         total-credit-collector
+         total-running-balance-collector
+         subtotal-style column-vector options export?)
   (let ((tm (gnc:timepair->date (gnc-transaction-get-date-posted
                                  (xaccSplitGetParent split)))))
     (add-subtotal-row table width
                       (total-string (strftime "%Y" tm))
-                      total-collector subtotal-style options export?)))
+                      total-debit-collector
+                      total-credit-collector
+                      total-running-balance-collector
+                      subtotal-style options export?)))
 
 
 (define (render-grand-total
-         table width total-collector options export?)
-  (add-subtotal-row table width
+            table
+            width
+            total-debit-collector
+            total-credit-collector
+            total-running-balance-collector
+            options
+            export?)
+  (add-subtotal-row table
+                    width
                     (_ "Grand Total")
-                    total-collector def:grand-total-style options export?))
+                    total-debit-collector
+                    total-credit-collector
+                    total-running-balance-collector
+                    def:grand-total-style
+                    options
+                    export?))
 
 (define account-types-to-reverse-assoc-list
   (list (cons 'none '())
@@ -1122,8 +1217,12 @@ Credit Card, and Income accounts.")))))
                           secondary-subtotal-pred
                           primary-subheading-renderer
                           secondary-subheading-renderer
-                          primary-subtotal-renderer
-                          secondary-subtotal-renderer)
+                          primary-debit-subtotal-renderer
+                          primary-credit-subtotal-renderer
+                          primary-running-balance-subtotal-renderer
+                          secondary-debit-subtotal-renderer
+                          secondary-credit-subtotal-renderer
+                          secondary-running-balance-subtotal-renderer)
 
  (let ((work-to-do (length splits))
        (work-done 0)
@@ -1174,11 +1273,21 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-subtotal-renderer
-                                  secondary-subtotal-renderer
-                                  primary-subtotal-collector
-                                  secondary-subtotal-collector
-                                  total-collector)
+                                  primary-debit-subtotal-renderer
+                                  primary-credit-subtotal-renderer
+                                  primary-running-balance-subtotal-renderer
+                                  secondary-debit-subtotal-renderer
+                                  secondary-credit-subtotal-renderer
+                                  secondary-running-balance-subtotal-renderer
+                                  primary-debit-subtotal-collector
+                                  primary-credit-subtotal-collector
+                                  primary-running-balance-subtotal-collector
+                                  secondary-debit-subtotal-collector
+                                  secondary-credit-subtotal-collector
+                                  secondary-running-balance-subtotal-collector
+                                  total-debit-collector
+                                  total-credit-collector
+                                  total-running-balance-collector)
 
     (gnc:report-percent-done (* 100 (/ work-done work-to-do)))
     (set! work-done (+ 1 work-done))
@@ -1190,8 +1299,15 @@ Credit Card, and Income accounts.")))))
            (list
             (gnc:make-html-table-cell/size
              1 width (gnc:make-html-text (gnc:html-markup-hr)))))
-	  (if (gnc:option-value (gnc:lookup-option options "Display" "Running balance grand total"))
-	      (render-grand-total table width total-collector options export?)))
+	  (if (or (gnc:option-value (gnc:lookup-option options "Display" "Running balance grand total"))
+            (gnc:option-value (gnc:lookup-option options "Display" "Debit/credit grand total")))
+	      (render-grand-total table
+                            width
+                            total-debit-collector
+                            total-credit-collector
+                            total-running-balance-collector
+                            options
+                            export?)))
 
         (let* ((current (car splits))
                (current-row-style (if multi-rows? def:normal-row-style
@@ -1204,7 +1320,7 @@ Credit Card, and Income accounts.")))))
                              table
                              current
                              used-columns
-			     options
+			                       options
                              current-row-style
                              account-types-to-reverse
                              #t)))
@@ -1213,17 +1329,52 @@ Credit Card, and Income accounts.")))))
                current table used-columns def:alternate-row-style
                account-types-to-reverse))
 
-          (primary-subtotal-collector 'add
+
+            ;; If debit value - adding to the debit collectors
+            (if (+ 1 1) ; TODO
+              (begin
+                (primary-debit-subtotal-collector 'add
+                                            (gnc:gnc-monetary-commodity
+                                             split-value)
+                                            (gnc:gnc-monetary-amount
+                                             split-value))
+                (secondary-debit-subtotal-collector 'add
+                                              (gnc:gnc-monetary-commodity
+                                               split-value)
+                                              (gnc:gnc-monetary-amount
+                                               split-value))
+                (total-debit-collector 'add
+                                 (gnc:gnc-monetary-commodity split-value)
+                                 (gnc:gnc-monetary-amount split-value)))
+
+              ;; Else it's a credit value - adding to the credit collectors
+              (begin
+                (primary-credit-subtotal-collector 'add
+                                           (gnc:gnc-monetary-commodity
+                                            split-value)
+                                           (gnc:gnc-monetary-amount
+                                            split-value))
+                (secondary-credit-subtotal-collector 'add
+                                             (gnc:gnc-monetary-commodity
+                                              split-value)
+                                             (gnc:gnc-monetary-amount
+                                              split-value))
+                (total-credit-collector 'add
+                                (gnc:gnc-monetary-commodity split-value)
+                                (gnc:gnc-monetary-amount split-value))))
+
+          ;; Always adding to the running balance collectors
+          (primary-running-balance-subtotal-collector 'add
                                       (gnc:gnc-monetary-commodity
                                        split-value)
                                       (gnc:gnc-monetary-amount
                                        split-value))
-          (secondary-subtotal-collector 'add
+          (secondary-running-balance-subtotal-collector 'add
                                         (gnc:gnc-monetary-commodity
                                          split-value)
                                         (gnc:gnc-monetary-amount
                                          split-value))
-          (total-collector 'add
+          (total-running-balance-collector 'add
                            (gnc:gnc-monetary-commodity split-value)
                            (gnc:gnc-monetary-amount split-value))
 
@@ -1235,18 +1386,68 @@ Credit Card, and Income accounts.")))))
                 (if secondary-subtotal-pred
 
                     (begin
-                      (secondary-subtotal-renderer
-                       table width current
-                       secondary-subtotal-collector
-                       def:secondary-subtotal-style used-columns options export?)
-                      (secondary-subtotal-collector 'reset #f #f)))
+                      (secondary-debit-subtotal-renderer
+                            table
+                            width
+                            current
+                            secondary-debit-subtotal-collector
+                            def:secondary-subtotal-style
+                            used-columns
+                            options
+                            export?)
+                      (secondary-credit-subtotal-renderer
+                            table
+                            width
+                            current
+                            secondary-credit-subtotal-collector
+                            def:secondary-subtotal-style
+                            used-columns
+                            options
+                            export?)
+                      (secondary-running-balance-subtotal-renderer
+                            table
+                            width
+                            current
+                            secondary-running-balance-subtotal-collector
+                            def:secondary-subtotal-style
+                            used-columns
+                            options
+                            export?)
+                      (secondary-debit-subtotal-collector 'reset #f #f)
+                      (secondary-credit-subtotal-collector 'reset #f #f)
+                      (secondary-running-balance-subtotal-collector 'reset #f #f)))
 
-                (primary-subtotal-renderer table width current
-                                           primary-subtotal-collector
-                                           def:primary-subtotal-style used-columns
-                                           options export?)
+                (primary-debit-subtotal-renderer
+                        table
+                        width
+                        current
+                        primary-debit-subtotal-collector
+                        def:primary-subtotal-style
+                        used-columns
+                        options
+                        export?)
+                (primary-credit-subtotal-renderer
+                        table
+                        width
+                        current
+                        primary-credit-subtotal-collector
+                        def:primary-subtotal-style
+                        used-columns
+                        options
+                        export?)
+                (primary-running-balance-subtotal-renderer
+                        table
+                        width
+                        current
+                        primary-running-balance-subtotal-collector
+                        def:primary-subtotal-style
+                        used-columns
+                        options
+                        export?)
 
-                (primary-subtotal-collector 'reset #f #f)
+                (primary-debit-subtotal-collector 'reset #f #f)
+                (primary-credit-subtotal-collector 'reset #f #f)
+                (primary-running-balance-subtotal-collector 'reset #f #f)
 
                 (if next
                     (begin
@@ -1264,11 +1465,37 @@ Credit Card, and Income accounts.")))))
                            (and next
                                 (not (secondary-subtotal-pred
                                       current next)))))
-                  (begin (secondary-subtotal-renderer
-                          table width current
-                          secondary-subtotal-collector
-                          def:secondary-subtotal-style used-columns options export?)
-                         (secondary-subtotal-collector 'reset #f #f)
+                  (begin (secondary-debit-subtotal-renderer
+                              table
+                              width
+                              current
+                              secondary-debit-subtotal-collector
+                              def:secondary-subtotal-style
+                              used-columns
+                              options
+                              export?)
+                          (secondary-credit-subtotal-renderer
+                                      table
+                                      width
+                                      current
+                                      secondary-credit-subtotal-collector
+                                      def:secondary-subtotal-style
+                                      used-columns
+                                      options
+                                      export?)
+                          (secondary-running-balance-subtotal-renderer
+                                      table
+                                      width
+                                      current
+                                      secondary-running-balance-subtotal-collector
+                                      def:secondary-subtotal-style
+                                      used-columns
+                                      options
+                                      export?)
+                         (secondary-debit-subtotal-collector 'reset #f #f)
+                         (secondary-credit-subtotal-collector 'reset #f #f)
+                         (secondary-running-balance-subtotal-collector 'reset #f #f)
+
                          (if next
                              (secondary-subheading-renderer
                               next table width
@@ -1286,11 +1513,21 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-subtotal-renderer
-                                  secondary-subtotal-renderer
-                                  primary-subtotal-collector
-                                  secondary-subtotal-collector
-                                  total-collector))))
+                                  primary-debit-subtotal-renderer
+                                  primary-credit-subtotal-renderer
+                                  primary-running-balance-subtotal-renderer
+                                  secondary-debit-subtotal-renderer
+                                  secondary-credit-subtotal-renderer
+                                  secondary-running-balance-subtotal-renderer
+                                  primary-debit-subtotal-collector
+                                  primary-credit-subtotal-collector
+                                  primary-running-balance-subtotal-collector
+                                  secondary-debit-subtotal-collector
+                                  secondary-credit-subtotal-collector
+                                  secondary-running-balance-subtotal-collector
+                                  total-debit-collector
+                                  total-credit-collector
+                                  total-running-balance-collector))))
 
   (let* ((table (gnc:make-html-table))
          (width (num-columns-required used-columns))
@@ -1320,8 +1557,18 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-subtotal-renderer
-                                  secondary-subtotal-renderer
+                                  primary-debit-subtotal-renderer
+                                  primary-credit-subtotal-renderer
+                                  primary-running-balance-subtotal-renderer
+                                  secondary-debit-subtotal-renderer
+                                  secondary-credit-subtotal-renderer
+                                  secondary-running-balance-subtotal-renderer
+                                  (gnc:make-commodity-collector)
+                                  (gnc:make-commodity-collector)
+                                  (gnc:make-commodity-collector)
+                                  (gnc:make-commodity-collector)
+                                  (gnc:make-commodity-collector)
+                                  (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector))))
@@ -1587,9 +1834,21 @@ Credit Card, and Income accounts.")))))
                       (get-subtotal-renderer   optname-prime-sortkey
                                                optname-prime-subtotal
                                                optname-prime-date-subtotal)
+                      (get-subtotal-renderer   optname-prime-sortkey
+                                              optname-prime-subtotal
+                                              optname-prime-date-subtotal)
+                      (get-subtotal-renderer   optname-prime-sortkey
+                                               optname-prime-subtotal
+                                               optname-prime-date-subtotal)
                       (get-subtotal-renderer   optname-sec-sortkey
                                                optname-sec-subtotal
-                                               optname-sec-date-subtotal))))
+                                               optname-sec-date-subtotal)
+                      (get-subtotal-renderer   optname-sec-sortkey
+                                              optname-sec-subtotal
+                                              optname-sec-date-subtotal)
+                      (get-subtotal-renderer   optname-sec-sortkey
+                                              optname-sec-subtotal
+                                              optname-sec-date-subtotal))))
 
                 (gnc:html-document-set-title! document
                                               report-title)
