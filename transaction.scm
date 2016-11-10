@@ -47,7 +47,7 @@
 
 ;; Define the strings here to avoid typos and make changes easier.
 
-(define reportname (N_ "Transaction Report"))
+(define reportname (N_ "Modified Transaction Report"))
 (define pagename-sorting (N_ "Sorting"))
 (define optname-prime-sortkey (N_ "Primary Key"))
 (define optname-prime-subtotal (N_ "Primary Subtotal"))
