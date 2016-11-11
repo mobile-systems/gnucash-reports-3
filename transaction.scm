@@ -31,6 +31,10 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; In Windows, to debug, start GnuCash  with
+;; "C:\Program Files (x86)\gnucash\bin\gnucash.exe" --debug --log gnc.scm=debug
+
+
 (define-module (gnucash report standard-reports transaction))
 
 (use-modules (gnucash main)) ;; FIXME: delete after we finish modularizing.
@@ -251,30 +255,36 @@
                     )
                 )
         )
-        (list (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
-                                        subtotal-string)
+        (begin
+          (gnc:debug "\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
+          (gnc:debug "\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
+          (gnc:debug "\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
+          (list
+             (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
+                                          subtotal-string)
 
-           (gnc:make-html-table-cell/markup
-              "total-number-cell"
-              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                (car debit-currency-totals)
-                (gnc:gnc-monetary-amount (car debit-currency-totals))
-              )
-           )
-           (gnc:make-html-table-cell/markup
-              "total-number-cell"
-              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                (car credit-currency-totals)
-                (gnc:gnc-monetary-amount (car credit-currency-totals))
-              )
-           )
-           (gnc:make-html-table-cell/markup
-              "total-number-cell"
-              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                (car running-balance-currency-totals)
-                (gnc:gnc-monetary-amount (car running-balance-currency-totals))
-              )
-           )
+             (gnc:make-html-table-cell/markup
+                "total-number-cell"
+                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                  (car debit-currency-totals)
+                  (gnc:gnc-monetary-amount (car debit-currency-totals))
+                )
+             )
+             (gnc:make-html-table-cell/markup
+                "total-number-cell"
+                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                  (car credit-currency-totals)
+                  (if (not (null? credit-currency-totals)) (gnc:gnc-monetary-amount (car credit-currency-totals)) "0")
+                )
+             )
+             (gnc:make-html-table-cell/markup
+                "total-number-cell"
+                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                  (car running-balance-currency-totals)
+                  (gnc:gnc-monetary-amount (car running-balance-currency-totals))
+                )
+             )
+          )
         )
      )
     )
@@ -1422,6 +1432,8 @@ Credit Card, and Income accounts.")))))
                         width
                         current
                         primary-debit-subtotal-collector
+                        primary-credit-subtotal-collector
+                        primary-running-balance-subtotal-collector
                         def:primary-subtotal-style
                         used-columns
                         options
@@ -1430,7 +1442,9 @@ Credit Card, and Income accounts.")))))
                         table
                         width
                         current
+                        primary-debit-subtotal-collector
                         primary-credit-subtotal-collector
+                        primary-running-balance-subtotal-collector
                         def:primary-subtotal-style
                         used-columns
                         options
@@ -1439,6 +1453,8 @@ Credit Card, and Income accounts.")))))
                         table
                         width
                         current
+                        primary-debit-subtotal-collector
+                        primary-credit-subtotal-collector
                         primary-running-balance-subtotal-collector
                         def:primary-subtotal-style
                         used-columns
@@ -1470,6 +1486,8 @@ Credit Card, and Income accounts.")))))
                               width
                               current
                               secondary-debit-subtotal-collector
+                              secondary-credit-subtotal-collector
+                              secondary-running-balance-subtotal-collector
                               def:secondary-subtotal-style
                               used-columns
                               options
@@ -1478,7 +1496,9 @@ Credit Card, and Income accounts.")))))
                                       table
                                       width
                                       current
+                                      secondary-debit-subtotal-collector
                                       secondary-credit-subtotal-collector
+                                      secondary-running-balance-subtotal-collector
                                       def:secondary-subtotal-style
                                       used-columns
                                       options
@@ -1487,6 +1507,8 @@ Credit Card, and Income accounts.")))))
                                       table
                                       width
                                       current
+                                      secondary-debit-subtotal-collector
+                                      secondary-credit-subtotal-collector
                                       secondary-running-balance-subtotal-collector
                                       def:secondary-subtotal-style
                                       used-columns
