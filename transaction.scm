@@ -1227,12 +1227,8 @@ Credit Card, and Income accounts.")))))
                           secondary-subtotal-pred
                           primary-subheading-renderer
                           secondary-subheading-renderer
-                          primary-debit-subtotal-renderer
-                          primary-credit-subtotal-renderer
-                          primary-running-balance-subtotal-renderer
-                          secondary-debit-subtotal-renderer
-                          secondary-credit-subtotal-renderer
-                          secondary-running-balance-subtotal-renderer)
+                          primary-subtotal-renderer
+                          secondary-subtotal-renderer)
 
  (let ((work-to-do (length splits))
        (work-done 0)
@@ -1283,12 +1279,8 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-debit-subtotal-renderer
-                                  primary-credit-subtotal-renderer
-                                  primary-running-balance-subtotal-renderer
-                                  secondary-debit-subtotal-renderer
-                                  secondary-credit-subtotal-renderer
-                                  secondary-running-balance-subtotal-renderer
+                                  primary-subtotal-renderer
+                                  secondary-subtotal-renderer
                                   primary-debit-subtotal-collector
                                   primary-credit-subtotal-collector
                                   primary-running-balance-subtotal-collector
@@ -1396,7 +1388,7 @@ Credit Card, and Income accounts.")))))
                 (if secondary-subtotal-pred
 
                     (begin
-                      (secondary-debit-subtotal-renderer
+                      (secondary-subtotal-renderer
                             table
                             width
                             current
@@ -1405,29 +1397,11 @@ Credit Card, and Income accounts.")))))
                             used-columns
                             options
                             export?)
-                      (secondary-credit-subtotal-renderer
-                            table
-                            width
-                            current
-                            secondary-credit-subtotal-collector
-                            def:secondary-subtotal-style
-                            used-columns
-                            options
-                            export?)
-                      (secondary-running-balance-subtotal-renderer
-                            table
-                            width
-                            current
-                            secondary-running-balance-subtotal-collector
-                            def:secondary-subtotal-style
-                            used-columns
-                            options
-                            export?)
                       (secondary-debit-subtotal-collector 'reset #f #f)
                       (secondary-credit-subtotal-collector 'reset #f #f)
                       (secondary-running-balance-subtotal-collector 'reset #f #f)))
 
-                (primary-debit-subtotal-renderer
+                (primary-subtotal-renderer
                         table
                         width
                         current
@@ -1438,29 +1412,6 @@ Credit Card, and Income accounts.")))))
                         used-columns
                         options
                         export?)
-                (primary-credit-subtotal-renderer
-                        table
-                        width
-                        current
-                        primary-debit-subtotal-collector
-                        primary-credit-subtotal-collector
-                        primary-running-balance-subtotal-collector
-                        def:primary-subtotal-style
-                        used-columns
-                        options
-                        export?)
-                (primary-running-balance-subtotal-renderer
-                        table
-                        width
-                        current
-                        primary-debit-subtotal-collector
-                        primary-credit-subtotal-collector
-                        primary-running-balance-subtotal-collector
-                        def:primary-subtotal-style
-                        used-columns
-                        options
-                        export?)
-
                 (primary-debit-subtotal-collector 'reset #f #f)
                 (primary-credit-subtotal-collector 'reset #f #f)
                 (primary-running-balance-subtotal-collector 'reset #f #f)
@@ -1481,7 +1432,7 @@ Credit Card, and Income accounts.")))))
                            (and next
                                 (not (secondary-subtotal-pred
                                       current next)))))
-                  (begin (secondary-debit-subtotal-renderer
+                  (begin (secondary-subtotal-renderer
                               table
                               width
                               current
@@ -1492,28 +1443,6 @@ Credit Card, and Income accounts.")))))
                               used-columns
                               options
                               export?)
-                          (secondary-credit-subtotal-renderer
-                                      table
-                                      width
-                                      current
-                                      secondary-debit-subtotal-collector
-                                      secondary-credit-subtotal-collector
-                                      secondary-running-balance-subtotal-collector
-                                      def:secondary-subtotal-style
-                                      used-columns
-                                      options
-                                      export?)
-                          (secondary-running-balance-subtotal-renderer
-                                      table
-                                      width
-                                      current
-                                      secondary-debit-subtotal-collector
-                                      secondary-credit-subtotal-collector
-                                      secondary-running-balance-subtotal-collector
-                                      def:secondary-subtotal-style
-                                      used-columns
-                                      options
-                                      export?)
                          (secondary-debit-subtotal-collector 'reset #f #f)
                          (secondary-credit-subtotal-collector 'reset #f #f)
                          (secondary-running-balance-subtotal-collector 'reset #f #f)
@@ -1535,12 +1464,8 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-debit-subtotal-renderer
-                                  primary-credit-subtotal-renderer
-                                  primary-running-balance-subtotal-renderer
-                                  secondary-debit-subtotal-renderer
-                                  secondary-credit-subtotal-renderer
-                                  secondary-running-balance-subtotal-renderer
+                                  primary-subtotal-renderer
+                                  secondary-subtotal-renderer
                                   primary-debit-subtotal-collector
                                   primary-credit-subtotal-collector
                                   primary-running-balance-subtotal-collector
@@ -1579,12 +1504,8 @@ Credit Card, and Income accounts.")))))
                                   secondary-subtotal-pred
                                   primary-subheading-renderer
                                   secondary-subheading-renderer
-                                  primary-debit-subtotal-renderer
-                                  primary-credit-subtotal-renderer
-                                  primary-running-balance-subtotal-renderer
-                                  secondary-debit-subtotal-renderer
-                                  secondary-credit-subtotal-renderer
-                                  secondary-running-balance-subtotal-renderer
+                                  primary-subtotal-renderer
+                                  secondary-subtotal-renderer
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector)
                                   (gnc:make-commodity-collector)
@@ -1856,18 +1777,6 @@ Credit Card, and Income accounts.")))))
                       (get-subtotal-renderer   optname-prime-sortkey
                                                optname-prime-subtotal
                                                optname-prime-date-subtotal)
-                      (get-subtotal-renderer   optname-prime-sortkey
-                                              optname-prime-subtotal
-                                              optname-prime-date-subtotal)
-                      (get-subtotal-renderer   optname-prime-sortkey
-                                               optname-prime-subtotal
-                                               optname-prime-date-subtotal)
-                      (get-subtotal-renderer   optname-sec-sortkey
-                                               optname-sec-subtotal
-                                               optname-sec-date-subtotal)
-                      (get-subtotal-renderer   optname-sec-sortkey
-                                              optname-sec-subtotal
-                                              optname-sec-date-subtotal)
                       (get-subtotal-renderer   optname-sec-sortkey
                                               optname-sec-subtotal
                                               optname-sec-date-subtotal))))
