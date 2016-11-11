@@ -1393,6 +1393,8 @@ Credit Card, and Income accounts.")))))
                             width
                             current
                             secondary-debit-subtotal-collector
+                            secondary-credit-subtotal-collector
+                            secondary-running-balance-subtotal-collector
                             def:secondary-subtotal-style
                             used-columns
                             options
