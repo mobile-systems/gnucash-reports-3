@@ -256,9 +256,9 @@
                 )
         )
         (begin
-          (gnc:debug "\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
-          (gnc:debug "\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
-          (gnc:debug "\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
+;(gnc:debug "\n\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
+;(gnc:debug "\n\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
+;(gnc:debug "\n\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
           (list
              (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
                                           subtotal-string)
@@ -267,14 +267,14 @@
                 "total-number-cell"
                 (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
                   (car debit-currency-totals)
-                  (gnc:gnc-monetary-amount (car debit-currency-totals))
+                    (gnc:gnc-monetary-amount (car debit-currency-totals))
                 )
              )
              (gnc:make-html-table-cell/markup
                 "total-number-cell"
                 (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
                   (car credit-currency-totals)
-                  (if (not (null? credit-currency-totals)) (gnc:gnc-monetary-amount (car credit-currency-totals)) "0")
+                    (gnc:gnc-monetary-amount (car credit-currency-totals))
                 )
              )
              (gnc:make-html-table-cell/markup
@@ -1326,46 +1326,60 @@ Credit Card, and Income accounts.")))))
                              current-row-style
                              account-types-to-reverse
                              #t)))
+          (gnc:warn "JWAB-debug: split-value: " split-value)
           (if multi-rows?
               (add-other-split-rows
                current table used-columns def:alternate-row-style
                account-types-to-reverse))
 
 
-            ;; If debit value - adding to the debit collectors
-            (if (+ 1 1) ; TODO
+            ;; If debit value - adding the split to the debit collectors, and 0 to the credit collectors
+            (if (gnc-numeric-positive-p (gnc:gnc-monetary-amount split-value)) ; TODO
               (begin
+;(gnc:warn "JWAB-debug: positive split value")
                 (primary-debit-subtotal-collector 'add
-                                            (gnc:gnc-monetary-commodity
-                                             split-value)
-                                            (gnc:gnc-monetary-amount
-                                             split-value))
+                                            (gnc:gnc-monetary-commodity split-value)
+                                            (gnc:gnc-monetary-amount split-value))
                 (secondary-debit-subtotal-collector 'add
-                                              (gnc:gnc-monetary-commodity
-                                               split-value)
-                                              (gnc:gnc-monetary-amount
-                                               split-value))
+                                              (gnc:gnc-monetary-commodity split-value)
+                                              (gnc:gnc-monetary-amount split-value))
                 (total-debit-collector 'add
                                  (gnc:gnc-monetary-commodity split-value)
-                                 (gnc:gnc-monetary-amount split-value)))
-
-              ;; Else it's a credit value - adding to the credit collectors
-              (begin
+                                 (gnc:gnc-monetary-amount split-value))
                 (primary-credit-subtotal-collector 'add
-                                           (gnc:gnc-monetary-commodity
-                                            split-value)
-                                           (gnc:gnc-monetary-amount
-                                            split-value))
+                                           (gnc:gnc-monetary-commodity split-value)
+                                           (gnc:make-gnc-numeric 0 100))
                 (secondary-credit-subtotal-collector 'add
-                                             (gnc:gnc-monetary-commodity
-                                              split-value)
-                                             (gnc:gnc-monetary-amount
-                                              split-value))
+                                             (gnc:gnc-monetary-commodity split-value)
+                                             (gnc:make-gnc-numeric 0 100))
                 (total-credit-collector 'add
                                 (gnc:gnc-monetary-commodity split-value)
-                                (gnc:gnc-monetary-amount split-value))))
+                                (gnc:make-gnc-numeric 0 100)))
+
+              ;; Else it's a credit value - adding the absolute value to the credit collectors and 0 to the debit collectors
+              (begin
+;(gnc:warn "JWAB-debug: not positive split value")
+                (primary-credit-subtotal-collector 'add
+                                           (gnc:gnc-monetary-commodity (gnc:monetary-neg split-value))
+                                           (gnc:gnc-monetary-amount (gnc:monetary-neg split-value)))
+                (secondary-credit-subtotal-collector 'add
+                                             (gnc:gnc-monetary-commodity (gnc:monetary-neg split-value))
+                                             (gnc:gnc-monetary-amount (gnc:monetary-neg split-value)))
+                (total-credit-collector 'add
+                                (gnc:gnc-monetary-commodity (gnc:monetary-neg split-value))
+                                (gnc:gnc-monetary-amount (gnc:monetary-neg split-value)))
+                (primary-debit-subtotal-collector 'add
+                                            (gnc:gnc-monetary-commodity split-value)
+                                            (gnc:make-gnc-numeric 0 100))
+                (secondary-debit-subtotal-collector 'add
+                                              (gnc:gnc-monetary-commodity split-value)
+                                              (gnc:make-gnc-numeric 0 100))
+                (total-debit-collector 'add
+                                 (gnc:gnc-monetary-commodity split-value)
+                                 (gnc:make-gnc-numeric 0 100))))
 
           ;; Always adding to the running balance collectors
+;(gnc:warn "JWAB-debug: adding to the running balance collector: " split-value)
           (primary-running-balance-subtotal-collector 'add
                                       (gnc:gnc-monetary-commodity
                                        split-value)
