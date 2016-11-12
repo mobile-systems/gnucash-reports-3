@@ -161,8 +161,9 @@
                  ""))))
 
 ;; render an account subheading - column-vector determines what is displayed
+;; this is called through get-subheading-renderer in do-rows-with-subtotals
 (define (render-account-subheading
-         split table width subheading-style column-vector)
+         split table width subheading-style column-vector options)
   (let ((account (xaccSplitGetAccount split)))
     (add-subheading-row (gnc:make-html-text
                          (gnc:html-markup-anchor
@@ -171,7 +172,27 @@
                                                (used-sort-account-code      column-vector)
                                                #t
                                                (used-sort-account-full-name column-vector))))
-                        table width subheading-style)))
+                        table width subheading-style)
+(gnc:warn "JWAB-debug: (gnc:lookup-option options gnc:pagename-general -Start Date-): " (gnc:lookup-option options gnc:pagename-general "Start Date"))
+(gnc:warn "JWAB-debug: (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-)): " (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))
+(gnc:warn "JWAB-debug: (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-))): " (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date"))))
+(gnc:warn "JWAB-debug: (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-)))): " (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))))
+(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:lookup-option options gnc:pagename-general "Start Date") #f))
+;(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")) #f))
+(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date"))) #f))
+(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))) #f))
+    (add-starting-balance-row table width
+                                    (N_ "Starting balance:")
+;                                    (gnc:account-get-comm-balance-at-date account
+;                                              (gnc:timepair-start-day-time
+                                                (gnc:date-option-absolute-time
+                                                  (gnc:option-value
+                                                    (gnc:lookup-option options gnc:pagename-general "Start Date"))
+                                                )
+;                                              )
+;                                              #f)
+                                    #f) ; TODO: Change #f to the real variable export?
+  ))
 
 (define (render-corresponding-account-subheading
          split table width subheading-style column-vector)
@@ -214,6 +235,88 @@
                        (gnc-transaction-get-date-posted
                         (xaccSplitGetParent split))))
                       table width subheading-style))
+
+
+(define (add-starting-balance-row table width starting-balance-string starting-balance export?)
+  (let ((blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
+    (gnc:html-table-append-row/markup!
+     table
+     def:normal-row-style
+     (if export?
+      (append! (gnc:html-make-empty-cells (- width 5))
+               (get-starting-balance-list starting-balance-string starting-balance (- width 5))
+      )
+      (begin
+        (append!
+           (gnc:html-make-empty-cells (- width 4))
+           (get-starting-balance-list starting-balance-string starting-balance (- width 4))
+        )
+      )
+     )
+   )
+  )
+)
+
+(define (get-starting-balance-list starting-balance-string starting-balance number-of-empty-cells)
+  (cons
+        (gnc:make-html-table-cell/markup
+                "text-cell"
+                starting-balance-string)
+        (append! (gnc:html-make-empty-cells number-of-empty-cells)
+                 (list (gnc:make-html-table-cell/markup "text-cell" starting-balance)))
+  )
+)
+
+(define (add-subtotal-row table width subtotal-string
+                          debit-subtotal-collector
+                          credit-subtotal-collector
+                          running-balance-subtotal-collector
+                          subtotal-style options export?)
+  (let ((debit-currency-totals (debit-subtotal-collector 'format gnc:make-gnc-monetary #f))
+        (credit-currency-totals (credit-subtotal-collector 'format gnc:make-gnc-monetary #f))
+        (running-balance-currency-totals (running-balance-subtotal-collector 'format gnc:make-gnc-monetary #f))
+        (blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
+    (gnc:html-table-append-row/markup!
+     table
+     subtotal-style
+     (if export?
+      (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
+                     (gnc:html-make-empty-cells (- width 4)))
+               (get-subtotal-numbers-html-list debit-currency-totals
+                                                       credit-currency-totals
+                                                       running-balance-currency-totals
+                                                       subtotal-string
+                                                       options)
+        )
+        (begin
+;(gnc:debug "\n\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
+;(gnc:debug "\n\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
+;(gnc:debug "\n\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
+          (cons
+             (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
+                                          subtotal-string)
+
+             (get-subtotal-numbers-html-list debit-currency-totals
+                                             credit-currency-totals
+                                             running-balance-currency-totals
+                                             subtotal-string
+                                             options)
+          )
+        )
+     )
+    )
+    ;; The support for debit and credit might not work correctly for mixed currencies
+    (for-each (lambda (currency)
+                (gnc:html-table-append-row/markup!
+                 table
+                 subtotal-style
+                 (append!
+                  (if export?
+                   (gnc:html-make-empty-cells (- width 1))
+                   (list blanks))
+                         (list (gnc:make-html-table-cell/markup
+                                "total-number-cell" currency)))))
+              (cdr running-balance-currency-totals))))
 
 
 (define (get-subtotal-numbers-html-list debit-currency-totals
@@ -281,57 +384,6 @@
              )
          )
  )
-
-(define (add-subtotal-row table width subtotal-string
-                          debit-subtotal-collector
-                          credit-subtotal-collector
-                          running-balance-subtotal-collector
-                          subtotal-style options export?)
-  (let ((debit-currency-totals (debit-subtotal-collector 'format gnc:make-gnc-monetary #f))
-        (credit-currency-totals (credit-subtotal-collector 'format gnc:make-gnc-monetary #f))
-        (running-balance-currency-totals (running-balance-subtotal-collector 'format gnc:make-gnc-monetary #f))
-        (blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
-    (gnc:html-table-append-row/markup!
-     table
-     subtotal-style
-     (if export?
-      (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
-                     (gnc:html-make-empty-cells (- width 4)))
-               (get-subtotal-numbers-html-list debit-currency-totals
-                                                       credit-currency-totals
-                                                       running-balance-currency-totals
-                                                       subtotal-string
-                                                       options)
-        )
-        (begin
-;(gnc:debug "\n\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
-;(gnc:debug "\n\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
-;(gnc:debug "\n\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
-          (cons
-             (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
-                                          subtotal-string)
-
-             (get-subtotal-numbers-html-list debit-currency-totals
-                                             credit-currency-totals
-                                             running-balance-currency-totals
-                                             subtotal-string
-                                             options)
-          )
-        )
-     )
-    )
-    ;; The support for debit and credit might not work correctly for mixed currencies
-    (for-each (lambda (currency)
-                (gnc:html-table-append-row/markup!
-                 table
-                 subtotal-style
-                 (append!
-                  (if export?
-                   (gnc:html-make-empty-cells (- width 1))
-                   (list blanks))
-                         (list (gnc:make-html-table-cell/markup
-                                "total-number-cell" currency)))))
-              (cdr running-balance-currency-totals))))
 
 (define (total-string str) (string-append (_ "Total For ") str))
 
@@ -1473,7 +1525,7 @@ Credit Card, and Income accounts.")))))
                 (if next
                     (begin
                       (primary-subheading-renderer
-                       next table width def:primary-subtotal-style used-columns)
+                       next table width def:primary-subtotal-style used-columns options)
 
                       (if secondary-subtotal-pred
                           (secondary-subheading-renderer
@@ -1545,7 +1597,7 @@ Credit Card, and Income accounts.")))))
         (begin
           (if primary-subheading-renderer
               (primary-subheading-renderer
-               (car splits) table width def:primary-subtotal-style used-columns))
+               (car splits) table width def:primary-subtotal-style used-columns options))
           (if secondary-subheading-renderer
               (secondary-subheading-renderer
                (car splits) table width def:secondary-subtotal-style used-columns))
