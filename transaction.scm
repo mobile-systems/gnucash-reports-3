@@ -54,7 +54,7 @@
 (define reportname (N_ "Modified Transaction Report"))
 (define pagename-sorting (N_ "Sorting"))
 (define optname-prime-sortkey (N_ "Primary Key"))
-(define optname-prime-subtotal (N_ "Primary Subtotal for Running Balance"))
+(define optname-prime-subtotal (N_ "Primary Subtotal"))
 (define optname-prime-subtotal-debit-credit (N_ "Primary Subtotal for Debit/Credit"))
 (define optname-prime-date-subtotal (N_ "Primary Subtotal for Date Key"))
 (define optname-sec-sortkey (N_ "Secondary Key"))
@@ -216,6 +216,72 @@
                       table width subheading-style))
 
 
+(define (get-subtotal-numbers-html-list debit-currency-totals
+                                        credit-currency-totals
+                                        running-balance-currency-totals
+                                        subtotal-string
+                                        options)
+        (list
+              (gnc:make-html-table-cell/markup
+                       "total-number-cell"
+                       (if (string=? subtotal-string (_ "Grand Total"))
+                           (if (gnc:option-value (gnc:lookup-option options "Display" "Debit/credit grand total"))
+                               (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                 (car debit-currency-totals)
+                                 (gnc:gnc-monetary-amount (car debit-currency-totals))
+                               )
+                               ""
+                           )
+                           (if (gnc:option-value (gnc:lookup-option options pagename-sorting optname-prime-subtotal-debit-credit))
+                               (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                 (car debit-currency-totals)
+                                 (gnc:gnc-monetary-amount (car debit-currency-totals))
+                               )
+                               ""
+                           )
+                       )
+              )
+              (gnc:make-html-table-cell/markup
+                       "total-number-cell"
+                       (if (string=? subtotal-string (_ "Grand Total"))
+                           (if (gnc:option-value (gnc:lookup-option options "Display" "Debit/credit grand total"))
+                               (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                 (car credit-currency-totals)
+                                 (gnc:gnc-monetary-amount (car credit-currency-totals))
+                               )
+                               ""
+                           )
+                           (if (gnc:option-value (gnc:lookup-option options pagename-sorting optname-prime-subtotal-debit-credit))
+                               (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                 (car credit-currency-totals)
+                                 (gnc:gnc-monetary-amount (car credit-currency-totals))
+                               )
+                               ""
+                           )
+                       )
+             )
+             (gnc:make-html-table-cell/markup
+                      "total-number-cell"
+                      (if (string=? subtotal-string (_ "Grand Total"))
+                          (if (gnc:option-value (gnc:lookup-option options "Display" "Running balance grand total"))
+                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                (car running-balance-currency-totals)
+                                (gnc:gnc-monetary-amount (car running-balance-currency-totals))
+                              )
+                              ""
+                          )
+                          (if (gnc:option-value (gnc:lookup-option options pagename-sorting optname-prime-subtotal))
+                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
+                                (car running-balance-currency-totals)
+                                (gnc:gnc-monetary-amount (car running-balance-currency-totals))
+                              )
+                              ""
+                          )
+                      )
+             )
+         )
+ )
+
 (define (add-subtotal-row table width subtotal-string
                           debit-subtotal-collector
                           credit-subtotal-collector
@@ -231,59 +297,25 @@
      (if export?
       (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
                      (gnc:html-make-empty-cells (- width 4)))
-               (list
-                     (gnc:make-html-table-cell/markup
-                              "total-number-cell"
-                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                                (car debit-currency-totals)
-                                (gnc:gnc-monetary-amount (car debit-currency-totals))
-                              )
-                     )
-                     (gnc:make-html-table-cell/markup
-                              "total-number-cell"
-                              (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                                (car credit-currency-totals)
-                                (gnc:gnc-monetary-amount (car credit-currency-totals))
-                              )
-                    )
-                    (gnc:make-html-table-cell/markup
-                             "total-number-cell"
-                             (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                               (car running-balance-currency-totals)
-                               (gnc:gnc-monetary-amount (car running-balance-currency-totals))
-                             )
-                    )
-                )
+               (get-subtotal-numbers-html-list debit-currency-totals
+                                                       credit-currency-totals
+                                                       running-balance-currency-totals
+                                                       subtotal-string
+                                                       options)
         )
         (begin
 ;(gnc:debug "\n\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
 ;(gnc:debug "\n\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
 ;(gnc:debug "\n\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
-          (list
+          (cons
              (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
                                           subtotal-string)
 
-             (gnc:make-html-table-cell/markup
-                "total-number-cell"
-                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                  (car debit-currency-totals)
-                    (gnc:gnc-monetary-amount (car debit-currency-totals))
-                )
-             )
-             (gnc:make-html-table-cell/markup
-                "total-number-cell"
-                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                  (car credit-currency-totals)
-                    (gnc:gnc-monetary-amount (car credit-currency-totals))
-                )
-             )
-             (gnc:make-html-table-cell/markup
-                "total-number-cell"
-                (if (gnc:option-value (gnc:lookup-option options "Display" "Show Currency"))
-                  (car running-balance-currency-totals)
-                  (gnc:gnc-monetary-amount (car running-balance-currency-totals))
-                )
-             )
+             (get-subtotal-numbers-html-list debit-currency-totals
+                                             credit-currency-totals
+                                             running-balance-currency-totals
+                                             subtotal-string
+                                             options)
           )
         )
      )
@@ -1011,11 +1043,17 @@
       #f))
 
     (gnc:register-trep-option
-     (gnc:make-simple-boolean-option
+     (gnc:make-complex-boolean-option
       pagename-sorting optname-prime-subtotal
       "c"
       (N_ "Subtotal for running balance according to the primary key?")
-      #f))
+      #f
+      #f
+      (lambda (x) (gnc-option-db-set-option-selectable-by-name
+  		 gnc:*transaction-report-options*
+  		 pagename-sorting
+  		 optname-prime-subtotal-debit-credit
+  		 x))))
 
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
@@ -1326,7 +1364,7 @@ Credit Card, and Income accounts.")))))
                              current-row-style
                              account-types-to-reverse
                              #t)))
-          (gnc:warn "JWAB-debug: split-value: " split-value)
+;(gnc:warn "JWAB-debug: split-value: " split-value)
           (if multi-rows?
               (add-other-split-rows
                current table used-columns def:alternate-row-style
