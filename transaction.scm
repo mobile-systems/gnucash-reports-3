@@ -173,25 +173,17 @@
                                                #t
                                                (used-sort-account-full-name column-vector))))
                         table width subheading-style)
-(gnc:warn "JWAB-debug: (gnc:lookup-option options gnc:pagename-general -Start Date-): " (gnc:lookup-option options gnc:pagename-general "Start Date"))
-(gnc:warn "JWAB-debug: (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-)): " (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))
-(gnc:warn "JWAB-debug: (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-))): " (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date"))))
-(gnc:warn "JWAB-debug: (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general -Start Date-)))): " (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))))
-(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:lookup-option options gnc:pagename-general "Start Date") #f))
-;(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")) #f))
-(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date"))) #f))
-(gnc:warn "JWAB-debug bal: " (gnc:account-get-comm-balance-at-date account (gnc:timepair-start-day-time (gnc:date-option-absolute-time (gnc:option-value (gnc:lookup-option options gnc:pagename-general "Start Date")))) #f))
+
     (add-starting-balance-row table width
                                     (N_ "Starting balance:")
-;                                    (gnc:account-get-comm-balance-at-date account
-;                                              (gnc:timepair-start-day-time
+                                    (gnc:account-get-balance-at-date account
+                                              (gnc:timepair-start-day-time
                                                 (gnc:date-option-absolute-time
                                                   (gnc:option-value
                                                     (gnc:lookup-option options gnc:pagename-general "Start Date"))
                                                 )
-;                                              )
-;                                              #f)
-                                    #f) ; TODO: Change #f to the real variable export?
+                                              )
+                                              #f))
   ))
 
 (define (render-corresponding-account-subheading
@@ -237,23 +229,13 @@
                       table width subheading-style))
 
 
-(define (add-starting-balance-row table width starting-balance-string starting-balance export?)
-  (let ((blanks (gnc:make-html-table-cell/size 1 (- width 1) #f)))
-    (gnc:html-table-append-row/markup!
-     table
-     def:normal-row-style
-     (if export?
-      (append! (gnc:html-make-empty-cells (- width 5))
-               (get-starting-balance-list starting-balance-string starting-balance (- width 5))
-      )
-      (begin
-        (append!
+(define (add-starting-balance-row table width starting-balance-string starting-balance)
+  (gnc:html-table-append-row/markup!
+         table
+         def:normal-row-style
+         (append!
            (gnc:html-make-empty-cells (- width 4))
-           (get-starting-balance-list starting-balance-string starting-balance (- width 4))
-        )
-      )
-     )
-   )
+           (get-starting-balance-list starting-balance-string starting-balance (- width 4)))
   )
 )
 
