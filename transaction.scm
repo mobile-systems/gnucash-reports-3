@@ -491,11 +491,11 @@
               (list ACCT-TYPE-LIABILITY ACCT-TYPE-PAYABLE ACCT-TYPE-EQUITY
                     ACCT-TYPE-CREDIT ACCT-TYPE-INCOME))))
 
-(define (used-date columns-used)
-  (vector-ref columns-used 0))
-(define (used-reconciled-date columns-used)
-  (vector-ref columns-used 1))
 (define (used-num columns-used)
+  (vector-ref columns-used 0))
+(define (used-date columns-used)
+  (vector-ref columns-used 1))
+(define (used-reconciled-date columns-used)
   (vector-ref columns-used 2))
 (define (used-description columns-used)
   (vector-ref columns-used 3))
@@ -559,13 +559,13 @@
     (gnc:option-value
      (gnc:lookup-option options section name)))
   (let ((column-list (make-vector columns-used-size #f)))
-    (if (opt-val (N_ "Display") (N_ "Date"))
-        (vector-set! column-list 0 #t))
-    (if (opt-val (N_ "Display") (N_ "Reconciled Date"))
-        (vector-set! column-list 1 #t))
     (if (if (gnc:lookup-option options (N_ "Display") (N_ "Num"))
             (opt-val (N_ "Display") (N_ "Num"))
             (opt-val (N_ "Display") (N_ "Num/Action")))
+        (vector-set! column-list 0 #t))
+    (if (opt-val (N_ "Display") (N_ "Date"))
+        (vector-set! column-list 1 #t))
+    (if (opt-val (N_ "Display") (N_ "Reconciled Date"))
         (vector-set! column-list 2 #t))
     (if (opt-val (N_ "Display") (N_ "Description"))
         (vector-set! column-list 3 #t))
@@ -605,10 +605,6 @@
 
 (define (make-heading-list column-vector options)
   (let ((heading-list '()))
-    (if (used-date column-vector)
-        (addto! heading-list (_ "Date")))
-    (if (used-reconciled-date column-vector)
-        (addto! heading-list (_ "Reconciled Date")))
     (if (used-num column-vector)
         (addto! heading-list (if (and (qof-book-use-split-action-for-num-field
                                                         (gnc-get-current-book))
@@ -622,6 +618,10 @@
                                           #f))
                                  (_ "Num/T-Num")
                                  (_ "Num"))))
+    (if (used-date column-vector)
+        (addto! heading-list (_ "Date")))
+    (if (used-reconciled-date column-vector)
+        (addto! heading-list (_ "Reconciled Date")))
     (if (used-description column-vector)
         (addto! heading-list (_ "Description")))
     (if (used-memo column-vector)
@@ -681,6 +681,29 @@
 		       ;; likely match a price on the previous day
 		       (timespecCanonicalDayTime trans-date))))
 
+     (if (used-num column-vector)
+         (addto! row-contents
+                 (if transaction-row?
+                     (if (qof-book-use-split-action-for-num-field
+                                                         (gnc-get-current-book))
+                         (let* ((num (gnc-get-num-action parent split))
+                                (t-num (if (if (gnc:lookup-option options
+                                                     gnc:pagename-display
+                                                     (N_ "Trans Number"))
+                                               (opt-val gnc:pagename-display
+                                                     (N_ "Trans Number"))
+                                               #f)
+                                           (gnc-get-num-action parent #f)
+                                           ""))
+                                (num-string (if (equal? t-num "")
+                                                num
+                                                (string-append num "/" t-num))))
+                               (gnc:make-html-table-cell/markup "text-cell"
+                                    num-string))
+                         (gnc:make-html-table-cell/markup "text-cell"
+                             (gnc-get-num-action parent split)))
+                     " ")))
+
     (if (used-date column-vector)
         (addto! row-contents
                 (if transaction-row?
@@ -694,28 +717,7 @@
 		      (if (equal? date (cons 0 0))
 		          " "
 		          (gnc-print-date date))))))
-    (if (used-num column-vector)
-        (addto! row-contents
-                (if transaction-row?
-                    (if (qof-book-use-split-action-for-num-field
-                                                        (gnc-get-current-book))
-                        (let* ((num (gnc-get-num-action parent split))
-                               (t-num (if (if (gnc:lookup-option options
-                                                    gnc:pagename-display
-                                                    (N_ "Trans Number"))
-                                              (opt-val gnc:pagename-display
-                                                    (N_ "Trans Number"))
-                                              #f)
-                                          (gnc-get-num-action parent #f)
-                                          ""))
-                               (num-string (if (equal? t-num "")
-                                               num
-                                               (string-append num "/" t-num))))
-                              (gnc:make-html-table-cell/markup "text-cell"
-                                   num-string))
-                        (gnc:make-html-table-cell/markup "text-cell"
-                            (gnc-get-num-action parent split)))
-                    " ")))
+
 
     (if (used-description column-vector)
         (addto! row-contents
