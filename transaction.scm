@@ -1273,7 +1273,7 @@ Credit Card, and Income accounts.")))))
 (define (display-date-interval begin end)
   (let ((begin-string (gnc-print-date begin))
         (end-string (gnc-print-date end)))
-    (sprintf #f (_ "From %s To %s") begin-string end-string)))
+    (sprintf #f (_ "Showing transactions from %s to %s") begin-string end-string)))
 
 (define (get-primary-subtotal-style options)
   (let ((bgcolor (gnc:lookup-option options
@@ -1581,7 +1581,7 @@ Credit Card, and Income accounts.")))))
   (let* ((table (gnc:make-html-table))
          (width (num-columns-required used-columns))
          (multi-rows? (transaction-report-multi-rows-p options))
-	 (export? (transaction-report-export-p options))
+	       (export? (transaction-report-export-p options))
          (account-types-to-reverse
           (get-account-types-to-reverse options)))
 
@@ -1800,7 +1800,7 @@ Credit Card, and Income accounts.")))))
         (primary-order (opt-val pagename-sorting "Primary Sort Order"))
         (secondary-key (opt-val pagename-sorting optname-sec-sortkey))
         (secondary-order (opt-val pagename-sorting "Secondary Sort Order"))
-	(void-status (opt-val gnc:pagename-accounts optname-void-transactions))
+	      (void-status (opt-val gnc:pagename-accounts optname-void-transactions))
         (splits '())
         (query (qof-query-create-for-splits)))
 
@@ -1888,7 +1888,22 @@ Credit Card, and Income accounts.")))))
                 (gnc:html-document-add-object!
                  document
                  (gnc:make-html-text
-                  (gnc:html-markup-h3
+                  (gnc:html-markup-p
+                   (gnc:company-info gnc:*company-name*))))
+                (gnc:html-document-add-object!
+                 document
+                 (gnc:make-html-text
+                   (gnc:html-markup-p
+                    (gnc:company-info gnc:*company-id*))))
+                (gnc:html-document-add-object!
+                 document
+                 (gnc:make-html-text
+                   (gnc:html-markup-p
+                    (string-append "Printed: " (gnc-print-date (gnc:get-today))))))
+                (gnc:html-document-add-object!
+                 document
+                 (gnc:make-html-text
+                  (gnc:html-markup-p
                    (display-date-interval begindate enddate))))
                 (gnc:html-document-add-object!
                  document
