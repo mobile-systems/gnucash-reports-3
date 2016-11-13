@@ -174,7 +174,8 @@
                                                (used-sort-account-full-name column-vector))))
                         table width subheading-style)
 
-    (add-starting-balance-row table width
+    (if (gnc:option-value (gnc:lookup-option options pagename-sorting "Starting Balance"))
+        (add-starting-balance-row table width
                                     (N_ "Starting balance:")
                                     (gnc:account-get-balance-at-date account
                                               (gnc:timepair-start-day-time
@@ -183,7 +184,7 @@
                                                     (gnc:lookup-option options gnc:pagename-general "Start Date"))
                                                 )
                                               )
-                                              #f))
+                                              #f)))
   ))
 
 (define (render-corresponding-account-subheading
@@ -1083,17 +1084,31 @@
       (N_ "Subtotal for running balance according to the primary key?")
       #f
       #f
-      (lambda (x) (gnc-option-db-set-option-selectable-by-name
-  		 gnc:*transaction-report-options*
-  		 pagename-sorting
-  		 optname-prime-subtotal-debit-credit
-  		 x))))
+      (lambda (x) (begin
+                    (gnc-option-db-set-option-selectable-by-name
+                       gnc:*transaction-report-options*
+                       pagename-sorting
+                       (N_ "Starting Balance")
+                       x)
+                    (gnc-option-db-set-option-selectable-by-name
+                  		 gnc:*transaction-report-options*
+                  		 pagename-sorting
+                  		 optname-prime-subtotal-debit-credit
+                  		 x)))))
+
+    (gnc:register-trep-option
+     (gnc:make-simple-boolean-option
+      pagename-sorting
+      (N_ "Starting Balance")
+      "c2"
+      (N_ "Display the starting balance for primary key?")
+      #t))
 
     (gnc:register-trep-option
      (gnc:make-simple-boolean-option
       pagename-sorting optname-prime-subtotal-debit-credit
-      "c2"
-      (N_ "Subtotal for debit/credit according to the primary key?")
+      "c3"
+      (N_ "Display subtotal for debit/credit according to the primary key?")
       #t))
 
     (gnc:register-trep-option
