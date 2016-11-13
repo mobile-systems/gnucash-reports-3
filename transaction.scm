@@ -262,31 +262,27 @@
     (gnc:html-table-append-row/markup!
      table
      subtotal-style
-     (if export?
-      (append! (cons (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string)
-                     (gnc:html-make-empty-cells (- width 4)))
+;     (if export?
+      (append! (gnc:html-make-empty-cells (- width 4))
+               (list (gnc:make-html-table-cell/markup "total-label-cell" subtotal-string))
                (get-subtotal-numbers-html-list debit-currency-totals
                                                        credit-currency-totals
                                                        running-balance-currency-totals
                                                        subtotal-string
                                                        options)
         )
-        (begin
-;(gnc:debug "\n\nJWAB-debug: debit-currency-totals: " debit-currency-totals)
-;(gnc:debug "\n\nJWAB-debug: credit-currency-totals: " credit-currency-totals)
-;(gnc:debug "\n\nJWAB-debug: running-balance-currency-totals: " running-balance-currency-totals)
-          (cons
-             (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
-                                          subtotal-string)
-
-             (get-subtotal-numbers-html-list debit-currency-totals
-                                             credit-currency-totals
-                                             running-balance-currency-totals
-                                             subtotal-string
-                                             options)
-          )
-        )
-     )
+;        (begin
+;          (cons
+;             (gnc:make-html-table-cell/size/markup 1 (- width 3) "total-label-cell"
+;                                          subtotal-string)
+;             (get-subtotal-numbers-html-list debit-currency-totals
+;                                             credit-currency-totals
+;                                             running-balance-currency-totals
+;                                             subtotal-string
+;                                             options)
+;          )
+;        )
+;     )
     )
     ;; The support for debit and credit might not work correctly for mixed currencies
     (for-each (lambda (currency)
@@ -368,7 +364,8 @@
          )
  )
 
-(define (total-string str) (string-append (_ "Total For ") str))
+;(define (total-string str) (string-append (_ "Total For ") str))
+(define (total-string str) (_ "Outgoing balance:"))
 
 (define (render-account-subtotal
          table width split
