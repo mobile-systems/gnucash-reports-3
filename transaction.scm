@@ -176,7 +176,7 @@
 
     (if (gnc:option-value (gnc:lookup-option options pagename-sorting "Starting Balance"))
         (add-starting-balance-row table width
-                                    (N_ "Starting balance:")
+                                    (N_ "Ingående saldo:")
                                     (gnc:account-get-balance-at-date account
                                               (gnc:timepair-start-day-time
                                                 (gnc:date-option-absolute-time
@@ -365,7 +365,7 @@
  )
 
 ;(define (total-string str) (string-append (_ "Total For ") str))
-(define (total-string str) (_ "Outgoing balance:"))
+(define (total-string str) (_ "Utgående saldo:"))
 
 (define (render-account-subtotal
          table width split
@@ -475,7 +475,7 @@
             export?)
   (add-subtotal-row table
                     width
-                    (_ "Grand Total")
+                    (_ "Summa för perioden")
                     total-debit-collector
                     total-credit-collector
                     total-running-balance-collector
@@ -617,7 +617,7 @@
                                                     (N_ "Trans Number")))
                                           #f))
                                  (_ "Num/T-Num")
-                                 (_ "Num"))))
+                                 (_ "Ver. nr."))))
     (if (used-date column-vector)
         (addto! heading-list (_ "Date")))
     (if (used-reconciled-date column-vector)
@@ -1273,7 +1273,7 @@ Credit Card, and Income accounts.")))))
 (define (display-date-interval begin end)
   (let ((begin-string (gnc-print-date begin))
         (end-string (gnc-print-date end)))
-    (sprintf #f (_ "Showing transactions from %s to %s") begin-string end-string)))
+    (sprintf #f (_ "Visar transaktioner från %s till %s") begin-string end-string)))
 
 (define (get-primary-subtotal-style options)
   (let ((bgcolor (gnc:lookup-option options
@@ -1899,7 +1899,7 @@ Credit Card, and Income accounts.")))))
                  document
                  (gnc:make-html-text
                    (gnc:html-markup-p
-                    (string-append "Printed: " (gnc-print-date (gnc:get-today))))))
+                    (string-append (_ "Utskriven: ") (gnc-print-date (gnc:get-today))))))
                 (gnc:html-document-add-object!
                  document
                  (gnc:make-html-text
